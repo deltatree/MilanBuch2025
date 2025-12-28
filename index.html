@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Die Murmelbande – Rewrite</title>
+  <style>
+    :root {
+      --bg: #fbfbfc;
+      --fg: #14151a;
+      --muted: #5b5f6a;
+      --card: #ffffff;
+      --border: rgba(20, 21, 26, 0.12);
+      --shadow: rgba(20, 21, 26, 0.10);
+      --link: #0b57d0;
+      --focus: #0b57d0;
+      --tocActiveBg: rgba(11, 87, 208, 0.08);
+      --max: 72ch;
+      --radius: 14px;
+      --pad: clamp(14px, 2.2vw, 20px);
+      --gap: clamp(12px, 2vw, 20px);
+      --h1: clamp(1.6rem, 2.7vw, 2.1rem);
+      --h2: clamp(1.25rem, 2.2vw, 1.55rem);
+      --p: 1.08rem;
+      --lh: 1.75;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0c0d10;
+        --fg: #f0f2f7;
+        --muted: #a8adba;
+        --card: #13141a;
+        --border: rgba(240, 242, 247, 0.12);
+        --shadow: rgba(0, 0, 0, 0.35);
+        --link: #8ab4f8;
+        --focus: #8ab4f8;
+        --tocActiveBg: rgba(138, 180, 248, 0.12);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--fg);
+      line-height: var(--lh);
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .skip {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 10px;
+      transform: translateY(-140%);
+    }
+    .skip:focus { transform: translateY(0); outline: 2px solid var(--focus); outline-offset: 2px; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--border);
+      background: rgba(251, 251, 252, 0.86);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      header { background: rgba(12, 13, 16, 0.86); }
+    }
+
+    @supports (backdrop-filter: blur(10px)) {
+      header { backdrop-filter: blur(10px); }
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px var(--pad);
+      gap: var(--gap);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .brand h1 {
+      font-size: 1.05rem;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chapter-jump {
+      display: none;
+      min-width: min(52vw, 340px);
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: 0 12px 30px var(--shadow);
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--pad);
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: var(--gap);
+      align-items: start;
+    }
+
+    nav {
+      position: sticky;
+      top: 72px;
+      max-height: calc(100vh - 88px);
+      overflow: auto;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--card);
+      box-shadow: 0 20px 50px var(--shadow);
+    }
+
+    nav h2 {
+      font-size: 0.95rem;
+      margin: 0 0 10px 0;
+      letter-spacing: 0.35px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .toc {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--fg);
+    }
+
+    .toc a[aria-current="true"] {
+      border-color: var(--border);
+      background: var(--tocActiveBg);
+      font-weight: 650;
+    }
+
+    article {
+      padding: clamp(16px, 2.4vw, 24px);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--card);
+      box-shadow: 0 20px 50px var(--shadow);
+    }
+
+    article .book-title {
+      font-size: var(--h1);
+      line-height: 1.2;
+      margin: 0 0 8px 0;
+    }
+
+    article .book-subtitle {
+      margin: 0 0 18px 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .content {
+      max-width: var(--max);
+    }
+
+    .content h2 {
+      font-size: var(--h2);
+      margin: 26px 0 10px;
+      line-height: 1.25;
+      scroll-margin-top: 84px;
+    }
+
+    .content hr {
+      margin: 22px 0;
+      border: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .content p {
+      margin: 0 0 14px;
+      font-size: var(--p);
+    }
+
+    .content em { font-style: italic; }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin: 0 0 18px 0;
+    }
+
+    .chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .chip { background: rgba(255, 255, 255, 0.04); }
+    }
+
+    .status {
+      margin: 0 0 14px;
+      padding: 12px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .status { background: rgba(255, 255, 255, 0.03); }
+    }
+
+    footer {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--pad) 30px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; }
+      nav { display: none; }
+      .chapter-jump { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#inhalt">Zum Buchinhalt springen</a>
+
+  <header>
+    <div class="topbar">
+      <div class="brand" aria-label="Seitentitel">
+        <h1 id="pageTitle">Die Murmelbande</h1>
+        <p>Rewrite – Gesamtausgabe</p>
+      </div>
+
+      <div class="chapter-jump" aria-label="Kapitel auswählen">
+        <select id="chapterSelect" aria-label="Kapitel auswählen"></select>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <nav aria-label="Kapitelübersicht">
+      <h2>Kapitel</h2>
+      <ul id="toc" class="toc"></ul>
+    </nav>
+
+    <article>
+      <div class="content" id="inhalt" aria-label="Buchinhalt">
+        <p class="status" id="status">Lade Buchtext…</p>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <p>Statische Webseite (ohne Tracking, ohne externe Ressourcen). Kapitel-Navigation funktioniert per Inhaltsverzeichnis.</p>
+  </footer>
+
+  <script>
+    "use strict";
+
+    const BOOK_URL = "./_bmad-output/rewrite/Kinderbuch-Murmelbande-Rewrite-Gesamtfassung.md";
+
+    function escapeHtml(text) {
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function slugify(text) {
+      return text
+        .toLowerCase()
+        .normalize("NFD").replace(/\p{Diacritic}+/gu, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "")
+        .slice(0, 80);
+    }
+
+    function mdInline(text) {
+      const escaped = escapeHtml(text);
+      return escaped.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    }
+
+    function markdownToHtml(markdown) {
+      const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+      const out = [];
+      let paragraph = [];
+
+      function flushParagraph() {
+        if (!paragraph.length) return;
+        const joined = paragraph.join(" ").replace(/\s+/g, " ").trim();
+        if (joined) out.push(`<p>${mdInline(joined)}</p>`);
+        paragraph = [];
+      }
+
+      for (const raw of lines) {
+        const line = raw.trimEnd();
+
+        if (/^\s*$/.test(line)) {
+          flushParagraph();
+          continue;
+        }
+
+        if (/^---+$/.test(line.trim())) {
+          flushParagraph();
+          out.push("<hr>");
+          continue;
+        }
+
+        const h1 = line.match(/^#\s+(.*)$/);
+        if (h1) {
+          flushParagraph();
+          out.push(`<h1 class="book-title">${mdInline(h1[1].trim())}</h1>`);
+          continue;
+        }
+
+        const h2 = line.match(/^##\s+(.*)$/);
+        if (h2) {
+          flushParagraph();
+          const title = h2[1].trim();
+          out.push(`<h2>${mdInline(title)}</h2>`);
+          continue;
+        }
+
+        paragraph.push(line);
+      }
+
+      flushParagraph();
+      return out.join("\n");
+    }
+
+    function wireToc(container) {
+      const toc = document.getElementById("toc");
+      const select = document.getElementById("chapterSelect");
+      toc.innerHTML = "";
+
+      const chapterHeadings = Array.from(container.querySelectorAll("h2"));
+      const options = [];
+
+      for (const heading of chapterHeadings) {
+        const text = heading.textContent || "";
+        const id = slugify(text) || "kapitel";
+        heading.id = id;
+
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = `#${id}`;
+        a.textContent = text;
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          document.getElementById(id)?.scrollIntoView({ block: "start" });
+          history.replaceState(null, "", `#${id}`);
+        });
+        li.appendChild(a);
+        toc.appendChild(li);
+
+        options.push({ id, text });
+      }
+
+      select.innerHTML = options
+        .map((o) => `<option value="${escapeHtml(o.id)}">${escapeHtml(o.text)}</option>`)
+        .join("\n");
+
+      select.addEventListener("change", () => {
+        const id = select.value;
+        document.getElementById(id)?.scrollIntoView({ block: "start" });
+        history.replaceState(null, "", `#${id}`);
+      });
+
+      const tocLinks = Array.from(toc.querySelectorAll("a"));
+      const byId = new Map(tocLinks.map((a) => [a.getAttribute("href")?.slice(1), a]));
+
+      function setCurrent(id) {
+        for (const link of tocLinks) link.setAttribute("aria-current", "false");
+        const current = byId.get(id);
+        if (current) current.setAttribute("aria-current", "true");
+        if (id && select.value !== id) select.value = id;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((e) => e.isIntersecting)
+            .sort((a, b) => (b.intersectionRatio - a.intersectionRatio));
+          if (visible[0]?.target?.id) setCurrent(visible[0].target.id);
+        },
+        { rootMargin: "-20% 0px -70% 0px", threshold: [0.01, 0.1, 0.3, 0.6] }
+      );
+
+      for (const heading of chapterHeadings) observer.observe(heading);
+
+      const initialId = (location.hash || "").replace(/^#/, "");
+      if (initialId) setCurrent(initialId);
+      else if (chapterHeadings[0]?.id) setCurrent(chapterHeadings[0].id);
+    }
+
+    async function init() {
+      const container = document.getElementById("inhalt");
+      const status = document.getElementById("status");
+
+      try {
+        const res = await fetch(BOOK_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const markdown = await res.text();
+        container.innerHTML = markdownToHtml(markdown);
+
+        const firstH1 = container.querySelector("h1");
+        const firstH2 = container.querySelector("h2");
+        if (firstH1) {
+          document.title = firstH1.textContent ? `${firstH1.textContent} – Rewrite` : document.title;
+          const pageTitle = document.getElementById("pageTitle");
+          if (pageTitle && firstH1.textContent) pageTitle.textContent = firstH1.textContent;
+        }
+
+        if (firstH1 && firstH2) {
+          const subtitleText = firstH2.textContent || "";
+          firstH2.insertAdjacentHTML(
+            "afterend",
+            `<p class="book-subtitle">${escapeHtml(subtitleText)}</p>`
+          );
+          firstH2.remove();
+          firstH1.insertAdjacentHTML(
+            "afterend",
+            `<div class="meta" role="note">
+              <span class="chip">Deutsch</span>
+              <span class="chip">Kindgerecht</span>
+              <span class="chip">Kapitel-Navigation</span>
+            </div>`
+          );
+        }
+
+        wireToc(container);
+      } catch (err) {
+        if (status) {
+          status.textContent = `Konnte Buchtext nicht laden (${String(err)}). Stelle sicher, dass die Datei unter ${BOOK_URL} veröffentlicht wird.`;
+        }
+      }
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
